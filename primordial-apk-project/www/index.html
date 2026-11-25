@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Primordial: From Cell to Eukaryote</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#071a22;--ink:#d9f3ee;--dim:#8fb5b3;--mem:#7ff0d0;--sug:#ffcf5a;--aa:#c58bff;--bad:#ff6b5e;--pan:rgba(10,36,46,.88);--line:#21505e;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 "Bricolage Grotesque",system-ui,sans-serif;overflow:hidden}
+canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+.card{background:var(--pan);border:1px solid var(--line);border-radius:12px;padding:10px 12px;backdrop-filter:blur(6px)}
+#top{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);left:10px;right:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start;pointer-events:none}
+#top>*{pointer-events:auto}
+.hud{width:250px;display:grid;gap:6px}
+.dv{padding:7px;border-radius:8px;border:1px solid var(--line);background:#0b2a35;font-size:12.5px;font-weight:600}.dv:not(:disabled){border-color:var(--mem)}.dv:disabled{opacity:.55;cursor:default}
+.off{display:none!important}
+#met{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,94vw);z-index:8;display:grid;gap:8px}#met canvas{position:static;inset:auto;width:100%;height:auto}
+#mbtn{padding:8px 14px;font-weight:600}
+#joy{position:fixed;right:18px;bottom:calc(env(safe-area-inset-bottom,0px) + 100px);width:120px;height:120px;border-radius:50%;background:rgba(127,240,208,.12);border:2px solid rgba(127,240,208,.4);touch-action:none;z-index:4}
+#knob{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:rgba(127,240,208,.55);pointer-events:none}
+#menu{position:fixed;inset:0;display:grid;place-items:center;background:rgba(4,16,22,.88);z-index:20;padding:16px}#menu .card{width:min(420px,100%);max-height:88vh;overflow:auto;display:grid;gap:10px}#menu label{display:flex;gap:8px;align-items:center;justify-content:space-between}#menu select{max-width:200px;background:#0b2a35;color:inherit;border:1px solid var(--line);border-radius:6px}
+.mt{display:flex;gap:6px}.mt button,#resume,#otest,.sec{flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:#0b2a35;font-weight:600}#resume{background:var(--mem);color:#052028}.sec{margin-left:8px;flex:0}
+.ac{padding:8px 10px;border:1px solid var(--line);border-radius:10px;display:grid;opacity:.55;margin-bottom:6px}.ac.got{opacity:1;border-color:var(--mem)}.ac span{font-size:12.5px;color:var(--dim)}#prot h4{margin:6px 0 0;font-size:12.5px;color:var(--mem)}
+#tabs{position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);display:flex;gap:6px;flex-wrap:wrap;z-index:5}
+#mini{width:100%;font-size:12.5px;background:var(--pan);border:1px solid var(--line);border-radius:10px;padding:6px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+#tabs button{flex:1;padding:8px 4px;border-radius:10px;border:1px solid var(--line);background:var(--pan);font-size:13px;font-weight:600}
+#tabs button.on{background:var(--mem);color:#052028;border-color:var(--mem)}#tabs button:disabled{opacity:.5}
+@media(min-width:760px){#tabs{display:none}}
+.path{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.path button{padding:5px 2px;border-radius:7px;border:1px solid var(--line);background:#0b2a35;font-size:12px}.path button.on{background:var(--mem);color:#052028;border-color:var(--mem)}.path button:disabled{opacity:.4;cursor:default}#o2t{font-size:12px;color:var(--dim)}
+.row{display:grid;grid-template-columns:78px 1fr 34px;gap:8px;align-items:center;font-size:13px;color:var(--dim)}
+.bar{height:8px;border-radius:4px;background:#0b2a35;overflow:hidden}
+.bar b{display:block;height:100%;width:0;background:var(--mem);transition:width .2s}
+.bar b.s{background:var(--sug)}.bar b.m{background:#9fd8ff}
+.row u{text-decoration:none;color:var(--ink);text-align:right}
+#evo{width:290px}
+#evo h2{margin:0 0 2px;font-size:16px;font-weight:800}
+#evo p{margin:6px 0 8px;font-size:13px;color:var(--dim)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--mem);outline-offset:2px}
+#evb{width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:#0b2a35;font-weight:600}
+#evb:not(:disabled){background:var(--mem);color:#052028;border-color:var(--mem);animation:pulse 1.4s infinite}
+#evb:disabled{opacity:.5;cursor:default}
+@keyframes pulse{50%{box-shadow:0 0 18px 2px rgba(127,240,208,.6)}}
+#prot{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 88px);max-height:34vh;overflow:auto;padding:10px;display:grid;gap:8px;background:var(--pan);border-top:1px solid var(--line);backdrop-filter:blur(6px)}
+#prot h3{margin:0;font-size:15px}
+.pr{display:grid;gap:3px;text-align:left;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:#0b2a35}
+.pr:not(:disabled):hover{border-color:var(--mem)}
+.pr .h{display:flex;justify-content:space-between;gap:8px}
+.pr em{font-style:normal;font-size:12px;color:var(--mem)}
+.pr .d{font-size:12.5px;color:var(--dim)}
+.pr .c{font-size:12.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pr .st{font-size:12px;margin-left:auto;color:var(--sug)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:-3px}
+.dot.a{background:var(--aa)}.dot.s{background:var(--sug)}
+.pr:disabled{cursor:default}.pr.lock,.pr:disabled:not(.built){opacity:.55}
+.pr.built{border-color:var(--mem);background:#0f3a40}.pr.built .st{color:var(--mem)}
+#msg{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 98px);max-width:min(92vw,520px);text-align:center;opacity:0;transition:opacity .3s;pointer-events:none;background:var(--pan);border:1px solid var(--line);border-radius:12px;padding:8px 14px}
+#msg.show{opacity:1}
+#intro{position:fixed;inset:0;display:grid;place-items:center;background:rgba(4,16,22,.82);padding:16px}
+#intro .card{max-width:440px;padding:22px}
+#intro h1{margin:0 0 8px;font-size:30px;font-weight:800}
+#intro p{margin:0 0 10px;color:var(--dim)}
+#go{padding:10px 18px;border-radius:8px;border:0;background:var(--mem);color:#052028;font-weight:800}
+@media(min-width:760px){
+ #top{right:340px}
+ #prot{left:auto;top:10px;bottom:10px;right:10px;width:320px;max-height:none;border:1px solid var(--line);border-radius:12px;align-content:start}
+ #msg{bottom:20px}
+}
+@media(prefers-reduced-motion:reduce){#evb:not(:disabled){animation:none}}
+</style></head>
+<body>
+<canvas id="c"></canvas>
+<div id="top">
+ <button id="mbtn" class="card">Menu</button><button id="metb" class="card" style="padding:8px 14px;font-weight:600">Metabolism</button>
+ <div class="hud card">
+  <div class="row"><span>Membrane</span><div class="bar"><b id="hp"></b></div><u id="hpn"></u></div>
+  <div class="row"><span>ATP</span><div class="bar"><b id="atp" class="s"></b></div><u id="atpn"></u></div>
+  <div class="row"><span>Amino acids</span><div></div><u id="aan"></u></div>
+  <div class="row"><span>Glucose</span><div class="bar"><b id="gb" style="background:#ffe9a8"></b></div><u id="gn"></u></div>
+  <div class="row"><span>Acid</span><div class="bar"><b id="acb" style="background:#ff8a6b"></b></div><u></u></div>
+  <div class="path"><button data-m="0">Ferment</button><button data-m="1">Anaerobic</button><button data-m="2">Aerobic</button></div>
+  <div id="o2t"></div>
+  <div class="row"><span>Organs</span><div class="bar"><b id="ob" class="m"></b></div><u id="orgn"></u></div>
+  <button id="dv" class="dv">Divide</button>
+ </div>
+ <div id="evo" class="card">
+  <h2 id="evn"></h2>
+  <div class="bar"><b id="mb" class="m"></b></div>
+  <p id="evr"></p>
+  <button id="evb" disabled>Evolve</button>
+ </div>
+</div>
+<div id="prot"><h3>Build proteins</h3></div>
+<div id="tabs"><div id="mini"></div><button data-t=".hud">Stats</button><button data-t="#evo">Evolve</button><button data-t="#prot">Proteins</button><button id="dv2">Divide</button></div>
+<style>body.po #msg{bottom:calc(34vh + 98px)}</style>
+<div id="msg"></div>
+<div id="met" class="card off"><div style="display:flex;justify-content:space-between;align-items:center"><b>Live ATP production</b><button id="metx" class="sec" style="margin:0">Close</button></div><canvas id="mc" width="420" height="260"></canvas></div>
+<div id="joy" class="off"><i id="knob"></i></div>
+<div id="menu" class="off"><div class="card"><div class="mt"><button data-p="opt">Options</button><button data-p="ach">Achievements</button></div>
+ <div id="mo" style="display:grid;gap:10px"><label><span>Sound effects</span><input type="checkbox" id="ov"></label><label><span>Volume</span><input type="range" id="ovol" min="0" max="1" step=".1"></label><label class="off"><span>Voice</span><select id="ovn"></select></label><label><span>Joystick on touch screens</span><input type="checkbox" id="oj"></label><button id="otest">Test sound</button></div>
+ <div id="ma" class="off"></div><button id="resume">Close menu</button></div></div>
+<div id="intro"><div class="card">
+ <h1>Primordial</h1>
+ <p>You’re a single bacterium that just slipped into a human host. Your goal is to infect and capture its organs: the gut, liver, lungs and brain. Swim with your mouse, your finger, or WASD.</p>
+ <p>Gold sugar gives you ATP. Purple amino acids are the raw material for proteins. Build proteins to unlock enzymes: they let you digest new food and survive new dangers.</p>
+ <p>Immune cells hunt you: neutrophils chase, T cells are fast, B cells shoot antibodies, and macrophages are huge. Red blood cells are food once you have protease. Sugar becomes glucose, and you choose how to turn it into ATP: fermentation, anaerobic or aerobic respiration. Press Space to divide: daughter cells follow you, forage, speed up infection, and take over if you die. Evolve to reach deeper organs.</p>
+ <button id="go">Start swimming</button><button id="io" class="sec">Options and achievements</button>
+</div></div>
+<script>
+const $=s=>document.querySelector(s),cv=$('#c'),ctx=cv.getContext('2d');
+let W,H,DPR,T=0,running=false,flash=0,hitT=0;
+function rs(){DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR}
+addEventListener('resize',rs);rs();
+const WS=4000,R=(a,b)=>a+Math.random()*(b-a),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+const ST=[{n:'Protocell',r:12,mass:0,p:[]},{n:'Bacterium',r:18,mass:15,p:['flagellin']},{n:'Large bacterium',r:26,mass:40,p:['permease','amylase']},{n:'Proto-eukaryote',r:36,mass:80,p:['tubulin','protease']},{n:'Eukaryote',r:48,mass:140,p:['synthase','catalase']}];
+const XF=[1,1.15,1.3,1.1,1.05];
+const PR=[
+{id:'flagellin',n:'Flagellin',t:'Flagellum',d:'A spinning tail. Much faster swimming.',aa:6,atp:4,s:0},
+{id:'permease',n:'Permease',t:'Transporter',d:'Wider membrane pores pull nutrients in from farther away.',aa:8,atp:6,s:1},
+{id:'amylase',n:'Amylase',t:'Enzyme',d:'Digests starch chains and doubles the ATP you get from sugar.',aa:10,atp:8,s:1},
+{id:'nitrate',n:'Nitrate reductase',t:'Enzyme',d:'Unlocks anaerobic respiration: 4 ATP per glucose, no oxygen needed.',aa:12,atp:8,s:1},
+{id:'etc',n:'Cytochrome oxidase',t:'Enzyme',d:'Unlocks aerobic respiration: 5 ATP per glucose at full oxygen, but oxygen above 60% creates harmful ROS.',aa:18,atp:12,s:2},
+{id:'wall',n:'Cell wall synthase',t:'Enzyme',d:'Builds a cell wall. Halves damage from predators.',aa:16,atp:12,s:1},
+{id:'protease',n:'Protease',t:'Enzyme',d:'Digests protein scraps and smaller cells.',aa:14,atp:10,s:2},
+{id:'tubulin',n:'Tubulin',t:'Cytoskeleton',d:'An inner scaffold that lets the cell grow a nucleus.',aa:24,atp:18,s:2},
+{id:'catalase',n:'Catalase',t:'Enzyme',d:'Breaks down peroxide, so toxic green zones can’t hurt you.',aa:12,atp:10,s:2},
+{id:'synthase',n:'ATP synthase',t:'Enzyme',d:'Squeezes 50% more ATP from everything you eat.',aa:30,atp:20,s:3}];
+PR.push(
+{id:'f1',n:'Lactate dehydrogenase',t:'Fermenter',d:'Pro: fermentation yields 2.5 ATP per glucose. Con: more acid to manage.',aa:8,atp:6,s:0},
+{id:'f2',n:'Acid pumps',t:'Fermenter',d:'Pro: acid builds half as fast and never hurts you. Con: expensive.',aa:12,atp:10,s:1,req:'f1'},
+{id:'f3',n:'Homolactic burst',t:'Fermenter',d:'Pro: converts glucose 60% faster. Con: acid builds faster too.',aa:20,atp:16,s:2,req:'f2'},
+{id:'n2',n:'Hydrogenase',t:'Anaerobe',d:'Pro: anaerobic yield +1.5 ATP per glucose. Con: locks you out of the other ATP builds.',aa:16,atp:12,s:2,req:'nitrate'},
+{id:'n3',n:'Sulfate reductase',t:'Anaerobe',d:'Pro: +2 ATP per glucose anywhere. Con: oxygen above 60% poisons you.',aa:24,atp:18,s:3,req:'n2'},
+{id:'a2',n:'Cytochrome bc1 complex',t:'Aerobe',d:'Pro: aerobic respiration works as if oxygen were at least 50%. Con: locks you out of the other ATP builds.',aa:18,atp:14,s:2,req:'etc'},
+{id:'a3',n:'Terminal oxidase',t:'Aerobe',d:'Pro: +2.5 ATP per glucose. Con: your base ATP drain is 30% higher.',aa:26,atp:20,s:3,req:'a2'},
+{id:'f4',n:'Lactic acid secretion',t:'Fermenter',d:'Pro: while acid is above 30%, nearby immune cells are slowed. Con: you must keep fermenting.',aa:26,atp:20,s:3,req:'f3'},
+{id:'f5',n:'Stationary phase',t:'Fermenter',d:'Pro: your base ATP drain is 35% lower. Con: still the weakest yield per glucose.',aa:34,atp:26,s:4,req:'f4'},
+{id:'n4',n:'Anaerobic stealth',t:'Anaerobe',d:'Pro: immune cells notice you from 35% less distance. Con: costly.',aa:30,atp:22,s:3,req:'n3'},
+{id:'n5',n:'Endospore',t:'Anaerobe',d:'Pro: once per 90 seconds you survive death at 40% health, plus 0.5 ATP per glucose. Con: oxygen still poisons you.',aa:38,atp:30,s:4,req:'n4'},
+{id:'a4',n:'Superoxide dismutase',t:'Aerobe',d:'Pro: oxygen no longer harms you and you swim 20% faster. Con: costly.',aa:30,atp:24,s:3,req:'a3'},
+{id:'a5',n:'Respiratory supercomplex',t:'Aerobe',d:'Pro: +2 ATP per glucose. Con: your base ATP drain is 30% higher again.',aa:40,atp:32,s:4,req:'a4'},
+{id:'cap1',n:'Slime layer',t:'Capsule',d:'Antibodies do half damage. Contact damage drops 15%.',aa:10,atp:8,s:1},
+{id:'cap2',n:'Polysaccharide capsule',t:'Capsule',d:'Antibodies bounce off. Contact damage drops 30%.',aa:18,atp:14,s:2,req:'cap1'},
+{id:'cap3',n:'Biofilm matrix',t:'Capsule',d:'Contact damage drops 45%, and daughter cells are shielded too.',aa:26,atp:20,s:3,req:'cap2'});
+const GRX={nitrate:'Anaerobe',etc:'Aerobe'},BRM={Fermenter:'F',Anaerobe:'N',Aerobe:'A'},ORD=['Core','Fermenter','Anaerobe','Aerobe','Capsule'],BR={};
+const HD={Core:'Core proteins',Fermenter:'Build 1: Fermenter. Fast and acidic',Anaerobe:'Build 2: Anaerobe. Efficient, but oxygen is toxic',Aerobe:'Build 3: Aerobe. Powerful, but hungry',Capsule:'Defense: Capsule'};
+PR.forEach(p=>{p.g=GRX[p.id]||(ORD.includes(p.t)?p.t:'Core');if(BRM[p.g])BR[p.id]=BRM[p.g]});
+PR.sort((a,b)=>ORD.indexOf(a.g)-ORD.indexOf(b.g));
+const brOwned=()=>{for(const id in BR)if(has[id])return BR[id]},capM=()=>1-.15*((has.cap1?1:0)+(has.cap2?1:0)+(has.cap3?1:0));
+const has={},P={x:WS/2,y:WS/2,vx:0,vy:0,r:12,ang:0,hp:100,atp:30,aa:0,mass:0,st:0},cam={x:P.x,y:P.y};
+let foods=[],preds=[],zones=[];const specks=[];
+for(let i=0;i<700;i++)specks.push({x:R(0,WS),y:R(0,WS),r:R(1,3),a:R(.04,.15)});
+function spawnFood(near){
+ let k,q=Math.random();
+ if(P.st>=2&&q<.12)k='pr';else if(P.st>=1&&q<.22)k='st';else k=Math.random()<.55?'s':'a';
+ const f={k,x:R(30,WS-30),y:R(30,WS-30),vx:R(-8,8),vy:R(-8,8),r:k==='st'?10:k==='pr'?8:4,ph:R(0,6)};
+ if(near){const g=R(0,6.28),d=R(80,320);f.x=cl(P.x+Math.cos(g)*d,30,WS-30);f.y=cl(P.y+Math.sin(g)*d,30,WS-30)}
+ foods.push(f)}
+for(let i=0;i<520;i++)spawnFood();for(let i=0;i<30;i++)spawnFood(1);
+const IM={n:{k:[1.2,1.8],sp:46,rg:500,dm:24},m:{k:[1.9,2.4],sp:30,rg:650,dm:38},t:{k:[1.1,1.4],sp:66,rg:380,dm:30},b:{k:[1.2,1.5],sp:36,rg:560,dm:8},r:{k:[.5,.85],sp:60,rg:260,dm:0}};
+function mkHost(x,y){const s=P.st,q=Math.random(),t=Math.random()<.35?'r':s>=3&&q<.2?'m':s>=2&&q<.4?'b':s>=1&&q<.65?'t':'n',m=IM[t];return{x,y,vx:0,vy:0,t,h:t!=='r',sp:m.sp,rg:m.rg,dm:m.dm,r:P.r*R(m.k[0],m.k[1]),ph:R(0,6),wa:R(0,6),cd:R(1,3)}}
+function spawnPred(){let x,y;do{x=R(50,WS-50);y=R(50,WS-50)}while(Math.hypot(x-P.x,y-P.y)<450);
+ preds.push(mkHost(x,y))}
+const keys=new Set(),ptr={on:false,x:0,y:0};
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys.add(k);if(k.startsWith('arrow'))e.preventDefault()});
+addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
+cv.addEventListener('pointermove',e=>{if(e.pointerType==='touch'&&isT&&opt.joy)return;ptr.on=true;ptr.x=e.clientX;ptr.y=e.clientY});
+cv.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&isT&&opt.joy)return;ptr.on=true;ptr.x=e.clientX;ptr.y=e.clientY});
+cv.addEventListener('pointerup',e=>{if(e.pointerType==='touch')ptr.on=false});
+let mt;function msg(t,ms=3500){if(ms>=2500)say(t.split(/[.!:]/)[0]);const m=$('#msg');m.textContent=t;m.classList.add('show');clearTimeout(mt);mt=setTimeout(()=>m.classList.remove('show'),ms)}
+const atpMax=()=>50+P.st*25,eff=()=>has.synthase?1.5:1;
+function eat(f){sfx(f.k==='s'||f.k==='a'?'pop':'chomp');
+ if(f.k==='s'){G+=3*(has.amylase?2:1);P.mass+=.5}
+ else if(f.k==='a'){P.aa+=2;P.mass+=1}
+ else if(f.k==='st'){G+=12;P.mass+=2}
+ else{P.aa+=6;P.mass+=3}
+ P.atp=Math.min(P.atp,atpMax());G=Math.min(G,gMax())}
+function step(dt){
+ let dx=0,dy=0;
+ if(keys.size){dx=(keys.has('d')||keys.has('arrowright'))-(keys.has('a')||keys.has('arrowleft'));dy=(keys.has('s')||keys.has('arrowdown'))-(keys.has('w')||keys.has('arrowup'));const l=Math.hypot(dx,dy);if(l){dx/=l;dy/=l}}
+ else if(joy.x||joy.y){dx=joy.x;dy=joy.y}
+ else if(ptr.on){dx=ptr.x-W/2;dy=ptr.y-H/2;const l=Math.hypot(dx,dy);if(l>4){const k=Math.min(1,l/80);dx=dx/l*k;dy=dy/l*k}else dx=dy=0}
+ const sp=(52+(has.flagellin?58:0))*(1-Math.min(.4,acid/250))*(slow>0?.6:1)*(has.a4?1.2:1),k=Math.min(1,dt*3);
+ P.vx+=(dx*sp-P.vx)*k;P.vy+=(dy*sp-P.vy)*k;
+ P.x=cl(P.x+P.vx*dt,0,WS);P.y=cl(P.y+P.vy*dt,0,WS);
+ if(Math.hypot(P.vx,P.vy)>8)P.ang+=Math.atan2(Math.sin(Math.atan2(P.vy,P.vx)-P.ang),Math.cos(Math.atan2(P.vy,P.vx)-P.ang))*Math.min(1,dt*6);
+ P.r+=(ST[P.st].r-P.r)*Math.min(1,dt*2);
+ P.atp-=dt*(.8+P.st*.55)*(has.a3?1.3:1)*(has.f5?.65:1)*(has.a5?1.3:1);metab(dt);
+ if(P.atp<=0){P.atp=0;P.hp-=dt*3}else if(P.atp>20)P.hp=Math.min(100,P.hp+dt*2);
+ for(let i=foods.length-1;i>=0;i--){const f=foods[i];
+  f.x+=f.vx*dt;f.y+=f.vy*dt;if(f.x<10||f.x>WS-10)f.vx*=-1;if(f.y<10||f.y>WS-10)f.vy*=-1;
+  const ok=f.k==='st'?has.amylase:f.k==='pr'?has.protease:true;if(!ok)continue;
+  const ex=P.x-f.x,ey=P.y-f.y,d=Math.hypot(ex,ey)||1,reach=P.r*(has.permease?2.2:1.4)+f.r;
+  if(d<reach){const pl=(1-d/reach)*140+30;f.x+=ex/d*pl*dt;f.y+=ey/d*pl*dt}
+  if(d<P.r+f.r*.5){eat(f);foods.splice(i,1)}}
+ while(foods.length<520)spawnFood();
+ for(let i=preds.length-1;i>=0;i--){const q=preds[i],ex=P.x-q.x,ey=P.y-q.y,d=Math.hypot(ex,ey)||1,big=q.h&&q.r>P.r*.9;
+  let tx,ty,s;
+  if(big&&d<q.rg*(has.n4?.65:1)){const k=q.t==='b'&&d<240?-1:1;tx=ex/d*k;ty=ey/d*k;s=q.sp}else if(!big&&d<260){tx=-ex/d;ty=-ey/d;s=60}
+  else{q.wa+=R(-1,1)*dt*2;tx=Math.cos(q.wa);ty=Math.sin(q.wa);s=25}
+  if(big&&d<150&&has.f4&&acid>30)s*=.5;q.vx+=(tx*s-q.vx)*dt*2;q.vy+=(ty*s-q.vy)*dt*2;q.x=cl(q.x+q.vx*dt,20,WS-20);q.y=cl(q.y+q.vy*dt,20,WS-20);
+  if(big&&d<P.r+q.r*.85){P.hp-=dt*q.dm*(has.wall?.5:1)*capM();hitT=.3;sfx('hurt')}
+  else if(!big&&has.protease&&d<P.r+q.r*.3){P.aa+=8;G+=8;sfx('chomp');P.mass+=q.r/3;preds.splice(i,1);msg('You digested a smaller cell.',1800);continue}
+  if(d>1500)preds.splice(i,1)}
+ while(preds.length<4+P.st*2)spawnPred();
+ if(!has.catalase)for(const z of zones)if(Math.hypot(P.x-z.x,P.y-z.y)<z.r){P.hp-=dt*12;hitT=.2}
+ colonyStep(dt);organStep(dt);abStep(dt);orgFx(dt);
+ if(hitT>0)hitT-=dt;if(flash>0)flash-=dt*1.5;
+ if(P.hp<=0&&has.n5&&T-sporeT>90){P.hp=40;sporeT=T;msg('Endospore formed! You survived death.',3500)}
+ if(P.hp<=0){if(D.length){const d=D.pop();P.x=d.x;P.y=d.y;P.hp=100;P.vx=P.vy=0;msg('Your cell died. You continue as one of your daughter cells.',4500)}else{P.hp=100;P.atp*=.5;P.aa=Math.floor(P.aa/2);P.x=P.y=WS/2;P.vx=P.vy=0;msg('Colony wiped out. You restart as a single cell with half your resources.',4500)}}}
+const ORG=[{n:'Gut lining',x:700,y:3300,r:300,st:1,need:30,rgb:'232,167,122',atp:.8,aa:.15},{n:'Liver',x:3300,y:3300,r:330,st:2,need:45,rgb:'200,90,80',atp:1.5,aa:.3},{n:'Lungs',x:3300,y:700,r:340,st:3,need:60,rgb:'255,160,190',atp:2.2,aa:.45},{n:'Brain',x:700,y:700,r:350,st:4,need:80,rgb:'170,150,255',atp:3,aa:.6}].map(o=>({...o,prog:0,done:false,tiles:Array.from({length:32},()=>{const a=R(0,6.28),d=Math.sqrt(Math.random())*.9;return[Math.cos(a)*d,Math.sin(a)*d,R(10,22)]})}));
+const D=[];let capInfo=null,divCd=0;
+const dvCap=()=>2+P.st*2,dvCost=()=>({atp:25+P.st*10,aa:4+P.st*2});
+let divA=null,G=20,acid=0,mode=0,slow=0;const AB=[];
+const gMax=()=>60+P.st*20,o2At=(x,y)=>{for(const o of ORG)if(o.k==='gut'&&Math.hypot(x-o.x,y-o.y)<o.r)return .05;for(const o of ORG)if(o.k==='lun'&&Math.hypot(x-o.x,y-o.y)<o.r)return 1;return cl(.25+.75*(1-Math.hypot(x-ORG[2].x,y-ORG[2].y)/3600),.25,1)},YL=[1.5,4,9];
+function yl(o){return mode===0?1.5+(has.f1?1:0)+(has.f3?.3:0):mode===1?4+(has.n2?1.5:0)+(has.n3?2:0)+(has.n5?.5:0):(5+(has.a3?2.5:0)+(has.a5?2:0))*Math.max(o,has.a2?.5:0)}
+function metab(dt){const o=o2At(P.x,P.y),g0=G;
+ if(G>0&&P.atp<atpMax()){const u=Math.min(G,(has.f3?2.2:mode===2?1:1.4)*dt);G-=u;P.atp=Math.min(atpMax(),P.atp+u*yl(o)*eff());if(mode===0)acid=Math.min(100,acid+u*(has.f2?.6:1.2))}
+ acid=Math.max(0,acid-(mode===0?.5:3)*dt);if(acid>80&&!has.f2)P.hp-=dt*2;if(has.n3&&o>.6)P.hp-=dt*(o-.6)*10;if(mode===2&&o>.6&&!has.a4&&!has.catalase)P.hp-=dt*(o-.6)*5;fx.u+=(Math.max(0,(g0-G)/dt)-fx.u)*.15}
+function abStep(dt){for(const q of preds){if(q.t!=='b'||!q.h)continue;q.cd-=dt;if(Math.hypot(P.x-q.x,P.y-q.y)<q.rg&&q.cd<=0){q.cd=2.6;const a=Math.atan2(P.y-q.y,P.x-q.x);AB.push({x:q.x,y:q.y,vx:Math.cos(a)*170,vy:Math.sin(a)*170,l:3})}}
+ for(let i=AB.length-1;i>=0;i--){const b=AB[i];b.x+=b.vx*dt;b.y+=b.vy*dt;b.l-=dt;if(Math.hypot(b.x-P.x,b.y-P.y)<P.r+6){if(!has.cap2){P.hp-=(has.wall?4:8)*(has.cap1?.5:1);slow=2.5;hitT=.2}AB.splice(i,1)}else if(b.l<=0)AB.splice(i,1)}
+ slow=Math.max(0,slow-dt)}
+function drawAb(b){ctx.save();ctx.translate(b.x,b.y);ctx.rotate(Math.atan2(b.vy,b.vx));ctx.strokeStyle='#8fe3ff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-7,0);ctx.lineTo(0,0);ctx.lineTo(6,-5);ctx.moveTo(0,0);ctx.lineTo(6,5);ctx.stroke();ctx.restore()}
+function pseudo(q,r){const tx=P.x-q.x,ty=P.y-q.y,d=Math.hypot(tx,ty),a0=Math.atan2(ty,tx),near=d<q.rg*.6&&q.h&&q.r>P.r*.9,w=Math.sin(T*5+q.ph);
+ ctx.fillStyle='rgba(255,214,170,.5)';ctx.strokeStyle='#ffd6aa';ctx.lineWidth=2;
+ for(let i=-1;i<=1;i++){const a=a0+i*.6,L=r*(near?.55+.25*w:.12);ctx.beginPath();ctx.moveTo(Math.cos(a-.35)*r*.9,Math.sin(a-.35)*r*.9);ctx.quadraticCurveTo(Math.cos(a)*(r+L)*1.05,Math.sin(a)*(r+L)*1.05,Math.cos(a+.35)*r*.9,Math.sin(a+.35)*r*.9);ctx.fill();ctx.stroke()}
+ if(near&&d<r+P.r+12){ctx.strokeStyle='rgba(255,214,170,.9)';ctx.lineWidth=5;ctx.beginPath();ctx.arc(tx,ty,P.r*1.4,a0+3.14-1.3-.25*w,a0+3.14+1.3+.25*w);ctx.stroke()}}
+function drawImm(q,r){const t=q.t;
+ if(q.h&&q.r>P.r*.9&&Math.hypot(P.x-q.x,P.y-q.y)<q.rg){ctx.strokeStyle=`rgba(255,90,80,${.35+.25*Math.sin(T*8)})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,r*1.35,0,7);ctx.stroke()}
+ if(t==='m')pseudo(q,r);ctx.beginPath();for(let i=0;i<=16;i++){const a=i/16*6.283,rr=r*(1+(t==='m'?.16*Math.sin(i*1.3+T*2+q.ph):.04*Math.sin(i*2.3+T*3+q.ph)));i?ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr):ctx.moveTo(Math.cos(a)*rr,Math.sin(a)*rr)}
+ ctx.closePath();ctx.fillStyle=t==='m'?'rgba(255,214,170,.5)':t==='t'?'rgba(170,210,255,.5)':'rgba(190,255,225,.45)';ctx.strokeStyle=t==='m'?'#ffd6aa':t==='t'?'#aad2ff':'#bfffe2';ctx.lineWidth=2;ctx.fill();ctx.stroke();
+ if(t==='m'){ctx.fillStyle='#8a4b2a';ctx.beginPath();ctx.arc(r*.1,0,r*.28,0,7);ctx.fill();ctx.fillStyle='rgba(120,200,120,.6)';for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(Math.cos(i*1.7+q.ph)*r*.55,Math.sin(i*1.7+q.ph)*r*.5,r*.12,0,7);ctx.fill()}}
+ else{ctx.fillStyle=t==='t'?'#1d2f66':'#2a7a6a';ctx.beginPath();ctx.arc(0,0,r*(t==='t'?.55:.3),0,7);ctx.fill();ctx.strokeStyle=t==='t'?'#ffb15a':'#7fe3ff';ctx.lineWidth=1.5;
+  for(let i=0;i<8;i++){const a=i*.785+q.ph,x=Math.cos(a)*r,y=Math.sin(a)*r,X=x*1.22,Y=y*1.22;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(X,Y);if(t==='b'){ctx.moveTo(X,Y);ctx.lineTo(X+Math.cos(a+.6)*r*.14,Y+Math.sin(a+.6)*r*.14);ctx.moveTo(X,Y);ctx.lineTo(X+Math.cos(a-.6)*r*.14,Y+Math.sin(a-.6)*r*.14)}ctx.stroke()}}}
+function drawDividing(){const r=P.r,t=divA.t,off=r*(t<.6?t/.6*.55:.55+(t-.6)/.4*.6),lw=Math.max(2,r*.1),w=1+Math.sin(T*3)*.03;
+ ctx.save();ctx.translate(P.x,P.y);ctx.rotate(divA.ang);
+ for(const [col,rr] of [['#7ff0d0',r+lw/2],['#17727b',r-lw/2]]){ctx.fillStyle=col;for(const s of [-1,1]){ctx.beginPath();ctx.arc(s*off,0,rr*w,0,7);ctx.fill()}}
+ if(off>r*.3&&off<r){const h=Math.sqrt(r*r-off*off)*.95;ctx.globalAlpha=Math.min(1,(off/r-.3)*3);ctx.strokeStyle='#7ff0d0';ctx.lineWidth=lw*.8;ctx.beginPath();ctx.moveTo(0,-h);ctx.lineTo(0,h);ctx.stroke();ctx.globalAlpha=1}
+ ctx.lineWidth=Math.max(1,r*.05);
+ for(const s of [-1,1]){const cx=s*off;ctx.fillStyle='rgba(255,255,255,.6)';for(const [x,y] of RB){ctx.beginPath();ctx.arc(cx+x*r*.7,y*r*.7,r*.06,0,7);ctx.fill()}
+  if(P.st>=3){ctx.fillStyle='rgba(70,50,140,.75)';ctx.beginPath();ctx.arc(cx,0,r*.3,0,7);ctx.fill()}else{ctx.strokeStyle='rgba(255,255,255,.55)';ctx.setLineDash([r*.1,r*.1]);ctx.beginPath();ctx.arc(cx,0,r*.3*Math.min(1,t*2),0,7);ctx.stroke();ctx.setLineDash([])}}
+ ctx.restore()}
+function divide(){const c=dvCost();if(!running||divA||divCd>0||D.length>=dvCap()||P.atp<c.atp||P.aa<c.aa)return;P.atp-=c.atp;P.aa-=c.aa;divCd=4;divA={t:0,ang:P.ang};sfx('split');msg('Binary fission: your cell is splitting in two.',2500);refresh()}
+addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();divide()}});
+function colonyStep(dt){divCd-=dt;P.atp-=dt*.15*D.length;
+ if(divA){divA.t+=dt/2.6;if(divA.t>=1){const off=P.r*1.15,ux=Math.cos(divA.ang),uy=Math.sin(divA.ang);D.push({x:P.x-ux*off,y:P.y-uy*off,vx:-ux*40,vy:-uy*40,r:P.r,ang:divA.ang+3.14,hp:100});P.x=cl(P.x+ux*off,0,WS);P.y=cl(P.y+uy*off,0,WS);divA=null;flash=.25;msg('Division complete. A daughter cell is on its own.',2500)}}
+ D.forEach((d,i)=>{const a=T*.6+i/D.length*6.283,rad=P.r*2.6+i*3;let gx=P.x+Math.cos(a)*rad,gy=P.y+Math.sin(a)*rad,fd=1e9,tf=null;
+  for(const f of foods){if(f.k==='st'&&!has.amylase||f.k==='pr'&&!has.protease)continue;const q=Math.hypot(f.x-d.x,f.y-d.y);if(q<fd){fd=q;tf=f}}
+  if(tf&&fd<120&&Math.hypot(tf.x-P.x,tf.y-P.y)<300){gx=tf.x;gy=tf.y}
+  const ex=gx-d.x,ey=gy-d.y,l=Math.hypot(ex,ey)||1,s=Math.min(1,l/60)*(52+(has.flagellin?58:0))*1.1;
+  d.vx+=(ex/l*s-d.vx)*Math.min(1,dt*3);d.vy+=(ey/l*s-d.vy)*Math.min(1,dt*3);
+  d.x=cl(d.x+d.vx*dt,0,WS);d.y=cl(d.y+d.vy*dt,0,WS);d.r+=(P.r*.75-d.r)*Math.min(1,dt*2);
+  if(Math.hypot(d.vx,d.vy)>8)d.ang=Math.atan2(d.vy,d.vx);
+  if(tf&&fd<d.r+tf.r*.5){const ix=foods.indexOf(tf);if(ix>=0){eat(tf);foods.splice(ix,1)}}
+  for(const q of preds)if(q.h&&q.r>P.r*.9&&Math.hypot(q.x-d.x,q.y-d.y)<d.r+q.r*.85)d.hp-=dt*30*(has.wall?.5:1)*(has.cap3?.5:1)});
+ for(let i=D.length-1;i>=0;i--)if(D[i].hp<=0){D.splice(i,1);msg('A daughter cell was destroyed.',2000)}}
+function organStep(dt){let cur=null;
+ for(const o of ORG){
+  if(o.done){P.atp=Math.min(atpMax(),P.atp+o.atp*dt*.4*eff());P.aa+=o.aa*dt;continue}
+  if(Math.hypot(P.x-o.x,P.y-o.y)>=o.r)continue;
+  if(P.st<o.st){if(!o.warn||T-o.warn>6){o.warn=T;msg(`Your cell is too primitive to infect the ${o.n}. Evolve to ${ST[o.st].n} first.`,4000)}continue}
+  cur=o;o.prog+=dt*(1+D.length*.5);o.t=(o.t||0)+dt;
+  if(o.t>7&&preds.filter(q=>Math.hypot(q.x-o.x,q.y-o.y)<o.r*1.5).length<3+o.st){o.t=0;const a=R(0,6.28);const q=mkHost(o.x+Math.cos(a)*o.r,o.y+Math.sin(a)*o.r),t2=o.k==='lun'||o.k==='brn'?'m':'n',mm=IM[t2];Object.assign(q,{t:t2,h:true,sp:mm.sp,rg:mm.rg,dm:mm.dm,r:P.r*R(mm.k[0],mm.k[1])});preds.push(q);msg('Inflammation! The host sent more immune cells.',2500)}
+  if(o.prog>=o.need){o.done=true;flash=1;ach(o.ach);msg(ORG.every(x=>x.done)?'The host has fallen. Every organ is yours.':`${o.n} captured! It now feeds your colony.`,ORG.every(x=>x.done)?12000:5000)}}
+ capInfo=cur}
+const RB=[[.4,.3],[-.3,.5],[.1,-.5],[.55,-.2],[-.5,-.2],[-.1,.1],[.3,.6],[-.55,.25],[.2,-.2]];
+function drawPlayer(o=P){
+ const r=o.r,st=P.st;ctx.save();ctx.translate(o.x,o.y);ctx.rotate(o.ang);
+ if(has.flagellin){ctx.strokeStyle='rgba(127,240,208,.85)';ctx.lineWidth=Math.max(1.5,r*.1);ctx.beginPath();
+  for(let i=0;i<=24;i++){const u=i/24,x=-r*.9-u*r*2.4,y=Math.sin(u*10-T*16)*r*.3*u;i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.stroke()}
+ const w=Math.sin(T*3)*.05,rx=r*XF[st]*(1+w),ry=r*(1-w);
+ if(has.cap1){const k=1.16+(has.cap2?.1:0)+(has.cap3?.1:0);ctx.fillStyle='rgba(255,230,140,.12)';ctx.strokeStyle='rgba(255,230,140,.5)';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,rx*k,ry*k,0,0,7);ctx.fill();ctx.stroke()}
+ if(has.wall){ctx.strokeStyle='#e3ff9a';ctx.lineWidth=r*.12;ctx.beginPath();ctx.ellipse(0,0,rx*1.1,ry*1.1,0,0,7);ctx.stroke()}
+ const g=ctx.createRadialGradient(0,0,r*.1,0,0,rx);g.addColorStop(0,'rgba(127,240,208,.3)');g.addColorStop(1,'rgba(30,130,140,.6)');
+ ctx.fillStyle=g;ctx.strokeStyle='#7ff0d0';ctx.lineWidth=Math.max(2,r*.1);ctx.beginPath();ctx.ellipse(0,0,rx,ry,0,0,7);ctx.fill();ctx.stroke();
+ ctx.fillStyle='rgba(255,255,255,.6)';for(const [a,b] of RB){ctx.beginPath();ctx.arc(a*rx*.8,b*ry*.8,r*.06,0,7);ctx.fill()}
+ if(st<3){ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=Math.max(1,r*.05);ctx.setLineDash([r*.1,r*.1]);ctx.beginPath();ctx.ellipse(-rx*.1,0,rx*.4,ry*.3,0,0,7);ctx.stroke();ctx.setLineDash([])}
+ else{ctx.fillStyle='rgba(70,50,140,.75)';ctx.strokeStyle='#b7a3ff';ctx.lineWidth=r*.05;ctx.beginPath();ctx.arc(r*.1,0,r*.38,0,7);ctx.fill();ctx.stroke();ctx.fillStyle='#d9ccff';ctx.beginPath();ctx.arc(r*.05,-r*.05,r*.1,0,7);ctx.fill()}
+ if(st>=4)for(const [a,b,t] of [[-.5,.4,.3],[.4,.55,-.5],[-.25,-.6,.8]]){ctx.save();ctx.translate(a*r,b*r);ctx.rotate(t);ctx.fillStyle='#ff9d6e';ctx.beginPath();ctx.ellipse(0,0,r*.22,r*.1,0,0,7);ctx.fill();ctx.strokeStyle='#7a2f12';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-r*.14,0);ctx.lineTo(r*.14,0);ctx.stroke();ctx.restore()}
+ ctx.restore()}
+function drawHost(q,big){const r=q.r;ctx.save();ctx.translate(q.x,q.y);if(q.t==='m'||q.t==='t'||q.t==='b'){drawImm(q,r);ctx.restore();return}
+ if(big){if(Math.hypot(P.x-q.x,P.y-q.y)<500){ctx.strokeStyle=`rgba(255,90,80,${.35+.25*Math.sin(T*8)})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,r*1.35,0,7);ctx.stroke()}
+  ctx.beginPath();for(let i=0;i<=14;i++){const t=i/14*6.283,rr=r*(1+.07*Math.sin(i*2.3+T*3+q.ph));i?ctx.lineTo(Math.cos(t)*rr,Math.sin(t)*rr):ctx.moveTo(Math.cos(t)*rr,Math.sin(t)*rr)}
+  ctx.closePath();ctx.fillStyle='rgba(240,236,250,.55)';ctx.strokeStyle='#f4efff';ctx.lineWidth=2;ctx.fill();ctx.stroke();
+  ctx.fillStyle='#7a5bd0';for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(Math.cos(q.ph+i*2.1)*r*.3,Math.sin(q.ph+i*2.1)*r*.3,r*.22,0,7);ctx.fill()}
+  ctx.fillStyle='rgba(255,170,190,.7)';for(let i=0;i<6;i++){ctx.beginPath();ctx.arc(Math.cos(i*1.9+q.ph)*r*.65,Math.sin(i*1.9+q.ph)*r*.65,r*.06,0,7);ctx.fill()}
+ }else{ctx.fillStyle='rgba(214,60,70,.75)';ctx.strokeStyle='#ff8a8a';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,r,r*.85,q.ph,0,7);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(120,20,30,.5)';ctx.beginPath();ctx.ellipse(0,0,r*.45,r*.35,q.ph,0,7);ctx.fill()}
+ ctx.restore()}
+function drawOrgans(){for(const o of ORG){const c=o.done?'110,230,150':o.rgb,g=ctx.createRadialGradient(o.x,o.y,o.r*.2,o.x,o.y,o.r);
+ g.addColorStop(0,`rgba(${c},.28)`);g.addColorStop(1,`rgba(${c},.05)`);ctx.fillStyle=g;ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,7);ctx.fill();
+ ctx.strokeStyle=`rgba(${c},.6)`;ctx.lineWidth=3;ctx.setLineDash([14,10]);ctx.stroke();ctx.setLineDash([]);
+ ctx.fillStyle=`rgba(${c},.25)`;for(const t of o.tiles){ctx.beginPath();ctx.arc(o.x+t[0]*o.r,o.y+t[1]*o.r,t[2],0,7);ctx.fill()}orgDeco(o,c);
+ if(o.prog>0&&!o.done){ctx.strokeStyle='#7ff0d0';ctx.lineWidth=8;ctx.beginPath();ctx.arc(o.x,o.y,o.r+10,-1.57,-1.57+6.283*o.prog/o.need);ctx.stroke()}
+ ctx.fillStyle='#d9f3ee';ctx.font='700 26px "Bricolage Grotesque",sans-serif';ctx.textAlign='center';ctx.fillText(o.n+(o.done?' (captured)':''),o.x,o.y-o.r-24)}}
+function drawMap(){const s=110,x0=10,y0=H-(W<760?($('#prot').classList.contains('off')?90:H*.34+90):0)-s-10,k=s/WS;ctx.fillStyle='rgba(10,36,46,.8)';ctx.fillRect(x0,y0,s,s);ctx.strokeStyle='#21505e';ctx.lineWidth=1;ctx.strokeRect(x0,y0,s,s);
+ for(const o of ORG){ctx.fillStyle=o.done?'#6ee696':'#e8a77a';ctx.globalAlpha=.7;ctx.beginPath();ctx.arc(x0+o.x*k,y0+o.y*k,Math.max(3,o.r*k),0,7);ctx.fill()}
+ ctx.globalAlpha=1;ctx.fillStyle='#7ff0d0';ctx.beginPath();ctx.arc(x0+P.x*k,y0+P.y*k,3,0,7);ctx.fill()}
+function draw(){
+ const dt=.016;cam.x+=(P.x-cam.x)*.12;cam.y+=(P.y-cam.y)*.12;
+ const sc=1.5*Math.pow(12/P.r,.55)*cl(W/800,.7,1);
+ ctx.setTransform(DPR,0,0,DPR,0,0);
+ const bg=ctx.createRadialGradient(W/2,H/2,50,W/2,H/2,Math.max(W,H)*.7);bg.addColorStop(0,'#0e3340');bg.addColorStop(1,'#04121a');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+ ctx.setTransform(DPR*sc,0,0,DPR*sc,DPR*(W/2-cam.x*sc),DPR*(H/2-cam.y*sc));
+ for(const s of specks){ctx.fillStyle=`rgba(180,255,240,${s.a})`;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);ctx.fill()}
+ ctx.strokeStyle='rgba(127,240,208,.25)';ctx.lineWidth=4;ctx.strokeRect(0,0,WS,WS);
+ drawOrgans();
+ for(const z of zones){const g=ctx.createRadialGradient(z.x,z.y,10,z.x,z.y,z.r);g.addColorStop(0,'rgba(190,255,90,.35)');g.addColorStop(1,'rgba(190,255,90,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(z.x,z.y,z.r,0,7);ctx.fill();
+  ctx.fillStyle='rgba(230,255,150,.6)';for(let i=0;i<7;i++){const a=i*2.4+z.x,rr=(i*29%z.r)*.9;ctx.beginPath();ctx.arc(z.x+Math.cos(a)*rr,z.y+Math.sin(a)*rr-((T*20+i*13)%20),2.5,0,7);ctx.fill()}}
+ for(const f of foods){const ok=f.k==='st'?has.amylase:f.k==='pr'?has.protease:true;ctx.globalAlpha=ok?1:.35;
+  if(f.k==='s'){ctx.fillStyle='#ffcf5a';ctx.beginPath();ctx.arc(f.x,f.y,4,0,7);ctx.fill()}
+  else if(f.k==='a'){ctx.fillStyle='#c58bff';for(let j=0;j<3;j++){ctx.beginPath();ctx.arc(f.x+Math.cos(f.ph+j*2.1+T)*3,f.y+Math.sin(f.ph+j*2.1+T)*3,2.4,0,7);ctx.fill()}}
+  else if(f.k==='st'){ctx.fillStyle='#ffe9a8';for(let j=0;j<5;j++){ctx.beginPath();ctx.arc(f.x+(j-2)*5,f.y+Math.sin(T*2+j+f.ph)*3,3.2,0,7);ctx.fill()}}
+  else{ctx.fillStyle='#a56bff';ctx.beginPath();ctx.arc(f.x,f.y,8,0,7);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.beginPath();for(let j=0;j<=8;j++){const x=f.x-6+j*1.5,y=f.y+Math.sin(j*1.6+f.ph)*3;j?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.stroke()}}
+ ctx.globalAlpha=1;
+ for(const q of preds)drawHost(q,q.h);for(const b of AB)drawAb(b);
+ for(const d of D){ctx.globalAlpha=.55+d.hp/220;drawPlayer(d)}ctx.globalAlpha=1;
+ divA?drawDividing():drawPlayer();
+ ctx.setTransform(DPR,0,0,DPR,0,0);
+ if(hitT>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.3,W/2,H/2,Math.max(W,H)*.7);g.addColorStop(0,'rgba(255,60,50,0)');g.addColorStop(1,`rgba(255,60,50,${Math.min(.5,hitT*2)})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
+ const bo=ORG[3];if(Math.hypot(P.x-bo.x,P.y-bo.y)<bo.r){const g=ctx.createRadialGradient(W/2,H/2,60,W/2,H/2,Math.min(W,H)*.45);g.addColorStop(0,'rgba(0,0,10,0)');g.addColorStop(1,'rgba(0,0,10,.93)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
+ if(flash>0){ctx.fillStyle=`rgba(200,255,240,${flash*.5})`;ctx.fillRect(0,0,W,H)}drawMap()}
+const pbtn={},panel=$('#prot');
+let lg;PR.forEach(p=>{if(p.g!==lg){lg=p.g;const h=document.createElement('h4');h.textContent=HD[p.g];panel.appendChild(h)}const b=document.createElement('button');b.className='pr';
+ b.innerHTML=`<span class="h"><b>${p.n}</b><em>${p.t}</em></span><span class="d">${p.d}</span><span class="c"><i class="dot a"></i>${p.aa} amino acids <i class="dot s"></i>${p.atp} ATP<span class="st"></span></span>`;
+ b.onclick=()=>build(p);panel.appendChild(b);pbtn[p.id]=b});
+$('#dv').onclick=divide;document.querySelectorAll('.path button').forEach(b=>b.onclick=()=>{mode=+b.dataset.m;refresh()});
+const tb=[...document.querySelectorAll('#tabs [data-t]')];
+function setPanel(sel,on){$(sel).classList.toggle('off',!on);tb.find(b=>b.dataset.t===sel).classList.toggle('on',on);if(sel==='#prot'){document.body.classList.toggle('po',on);if(on)msg('Game paused while the protein tab is open.',2000)}}
+tb.forEach(b=>b.onclick=()=>setPanel(b.dataset.t,$(b.dataset.t).classList.contains('off')));
+$('#dv2').onclick=divide;
+const ACH=[{id:'sp',n:'Streptococcus pyogenes',d:'Finish the Fermenter build.'},{id:'bf',n:'Bacteroides fragilis',d:'Finish the Anaerobe build.'},{id:'mt',n:'Mycobacterium tuberculosis',d:'Finish the Aerobe build.'},{id:'spn',n:'Streptococcus pneumoniae',d:'Build a full capsule.'},{id:'hp',n:'Helicobacter pylori',d:'Capture the gut lining.'},{id:'se',n:'Salmonella enterica',d:'Capture the liver.'},{id:'lp',n:'Legionella pneumophila',d:'Capture the lungs.'},{id:'nm',n:'Neisseria meningitidis',d:'Capture the brain.'}];
+const AM={f5:'sp',n5:'bf',a5:'mt',cap3:'spn'};let got={};try{got=JSON.parse(localStorage.getItem('prim')||'{}')}catch(e){}
+ORG.forEach((o,i)=>o.ach=['hp','se','lp','nm'][i]);
+function ach(id){if(got[id])return;got[id]=1;try{localStorage.setItem('prim',JSON.stringify(got))}catch(e){}const a=ACH.find(x=>x.id===id);setTimeout(()=>{msg('Achievement unlocked: '+a.n,5000);sfx('ach')},2200)}
+const opt={voice:true,vol:.8,vn:'',joy:true};try{Object.assign(opt,JSON.parse(localStorage.getItem('primopt')||'{}'))}catch(e){}
+const so=()=>{try{localStorage.setItem('primopt',JSON.stringify(opt))}catch(e){}};
+function say(){}
+let AC;const lastS={};
+function tn(f0,f1,d,ty,v,t0=0){const t=AC.currentTime+t0,o=AC.createOscillator(),g=AC.createGain();o.type=ty;o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+d);g.gain.setValueAtTime(v*opt.vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d)}
+function sfx(k){if(!opt.voice||opt.vol<=0)return;const n=performance.now();if(n-(lastS[k]||0)<(k==='hurt'?280:60))return;lastS[k]=n;
+ try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();
+  if(k==='pop')tn(420+Math.random()*120,900,.07,'sine',.25);
+  else if(k==='chomp'){tn(220,520,.1,'triangle',.3);tn(330,700,.1,'sine',.2,.07)}
+  else if(k==='click')tn(700,450,.04,'square',.1);
+  else if(k==='build'){tn(500,900,.08,'sine',.25);tn(800,1400,.1,'sine',.25,.09)}
+  else if(k==='hurt')tn(220,90,.15,'sawtooth',.18);
+  else if(k==='split')tn(250,700,.3,'sine',.3);
+  else if(k==='ach')[660,830,990,1320].forEach((f,i)=>tn(f,f*1.01,.18,'triangle',.25,i*.1));
+  else if(k==='evo'){tn(300,1200,.5,'sawtooth',.15);tn(450,1800,.5,'sine',.2)}}catch(e){}}
+document.addEventListener('click',e=>{if(e.target.closest('button'))sfx('click')});
+function fillV(){if(!window.speechSynthesis)return;$('#ovn').innerHTML='<option value="">Default voice</option>'+speechSynthesis.getVoices().map(v=>`<option${v.name===opt.vn?' selected':''}>${v.name}</option>`).join('')}
+fillV();if(window.speechSynthesis)speechSynthesis.onvoiceschanged=fillV;
+$('#ov').checked=opt.voice;$('#ovol').value=opt.vol;$('#oj').checked=opt.joy;
+$('#ov').onchange=e=>{opt.voice=e.target.checked;so()};$('#ovol').oninput=e=>{opt.vol=+e.target.value;so()};$('#ovn').onchange=e=>{opt.vn=e.target.value;so()};
+$('#oj').onchange=e=>{opt.joy=e.target.checked;so();applyJoy()};$('#otest').onclick=()=>sfx('pop');
+function menuTab(p){$('#mo').classList.toggle('off',p!=='opt');$('#ma').classList.toggle('off',p!=='ach');if(p==='ach')$('#ma').innerHTML=ACH.map(a=>`<div class="ac ${got[a.id]?'got':''}"><b>${got[a.id]?a.n:'Locked'}</b><span>${a.d}</span></div>`).join('')}
+function menu(on){$('#menu').classList.toggle('off',!on);if(!$('#intro'))running=!on;if(on)menuTab('opt')}
+document.querySelectorAll('.mt button').forEach(b=>b.onclick=()=>menuTab(b.dataset.p));
+$('#mbtn').onclick=()=>menu(true);$('#resume').onclick=()=>menu(false);$('#io').onclick=()=>menu(true);
+addEventListener('keydown',e=>{if(e.key==='Escape')menu($('#menu').classList.contains('off'))});
+const joy={x:0,y:0},isT=matchMedia('(pointer:coarse)').matches,jb=$('#joy'),kn=$('#knob');let jid=null;
+function jm(e){const b=jb.getBoundingClientRect(),dx=e.clientX-(b.left+60),dy=e.clientY-(b.top+60),l=Math.hypot(dx,dy)||1,k=Math.min(1,l/50);joy.x=dx/l*k;joy.y=dy/l*k;kn.style.transform=`translate(${joy.x*40}px,${joy.y*40}px)`}
+jb.addEventListener('pointerdown',e=>{jid=e.pointerId;jb.setPointerCapture(jid);jm(e)});jb.addEventListener('pointermove',e=>{if(e.pointerId===jid)jm(e)});
+const je=e=>{if(e.pointerId===jid){jid=null;joy.x=joy.y=0;kn.style.transform=''}};jb.addEventListener('pointerup',je);jb.addEventListener('pointercancel',je);
+function applyJoy(){jb.classList.toggle('off',!(isT&&opt.joy))}applyJoy();
+const fx={u:0};let sporeT=-999;
+ORG.forEach((o,i)=>{o.k=['gut','liv','lun','brn'][i];o.say=['The Crowded Gut: warm and sugary, but almost no oxygen. Peristalsis waves push you along.','The Detox Plant: amino acids everywhere, but bile waves burn anything without a slime layer or catalase.','The Storm: rich in oxygen and breezy, but alveolar macrophages patrol and the breathing wind pushes you.','The Fortress: pitch dark. The blood-brain barrier hurts you without a polysaccharide capsule, and microglia guard it.'][i]});
+function spawnFoodAt(x,y,k){foods.push({k,x:cl(x,30,WS-30),y:cl(y,30,WS-30),vx:R(-8,8),vy:R(-8,8),r:4,ph:R(0,6)})}
+function orgFx(dt){for(const o of ORG){const dx=P.x-o.x,dy=P.y-o.y,d=Math.hypot(dx,dy);if(d>=o.r){o.in=false;continue}
+ if(!o.in){o.in=true;msg(o.say,6000)}
+ if(o.k==='gut'){const a=T*.5,w=Math.max(0,Math.sin(T*.9));P.x=cl(P.x+Math.cos(a)*40*w*dt,0,WS);P.y=cl(P.y+Math.sin(a)*40*w*dt,0,WS);if(Math.random()<dt*1.5)spawnFoodAt(P.x+R(-300,300),P.y+R(-300,300),'s')}
+ else if(o.k==='liv'){const rr=(T%6)/6*o.r;if(Math.abs(d-rr)<30&&!has.catalase&&!has.cap1){P.hp-=dt*16;hitT=.2}if(Math.random()<dt*1.2)spawnFoodAt(P.x+R(-300,300),P.y+R(-300,300),'a')}
+ else if(o.k==='lun'){const w=Math.sin(T*.8)*55;P.x=cl(P.x-dx/(d||1)*w*dt,0,WS);P.y=cl(P.y-dy/(d||1)*w*dt,0,WS)}
+ else if(!has.cap2){P.hp-=dt*6;hitT=.15}}}
+function orgDeco(o,c){ctx.save();ctx.translate(o.x,o.y);ctx.strokeStyle=`rgba(${c},.55)`;ctx.lineWidth=3;
+ if(o.k==='gut'){for(let i=0;i<40;i++){const a=i/40*6.283,l=24+10*Math.sin(T*2+i);ctx.beginPath();ctx.moveTo(Math.cos(a)*o.r,Math.sin(a)*o.r);ctx.lineTo(Math.cos(a)*(o.r-l),Math.sin(a)*(o.r-l));ctx.stroke()}}
+ else if(o.k==='liv'){ctx.strokeStyle='rgba(200,230,90,.5)';ctx.lineWidth=8;ctx.beginPath();ctx.arc(0,0,(T%6)/6*o.r,0,7);ctx.stroke();ctx.strokeStyle=`rgba(${c},.4)`;ctx.lineWidth=2;for(let i=0;i<6;i++){const a=i*1.047;ctx.beginPath();for(let j=0;j<6;j++){const b=j*1.047,x=Math.cos(a)*o.r*.5+Math.cos(b)*50,y=Math.sin(a)*o.r*.5+Math.sin(b)*50;j?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.closePath();ctx.stroke()}}
+ else if(o.k==='lun'){const br=1+.06*Math.sin(T*.8);for(let i=0;i<9;i++){const a=i*.7+1;ctx.beginPath();ctx.arc(Math.cos(a)*o.r*.55*br,Math.sin(a)*o.r*.55*br,40*br,0,7);ctx.stroke()}}
+ else{for(let i=0;i<14;i++){const a=i*.9,x=Math.cos(a)*o.r*.6,y=Math.sin(a)*o.r*.6;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x*1.2+Math.sin(i+T)*20,y*1.2);ctx.stroke();if(Math.sin(T*3+i)>.8){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,6,0,7);ctx.fill()}}}
+ ctx.restore()}
+function drawMet(){const c=$('#mc').getContext('2d'),u=fx.u,m=mode,o=o2At(P.x,P.y),on=u>.03,tot=u*yl(o)*eff(),dr=(.8+P.st*.55)*(has.a3?1.3:1)*(has.f5?.65:1)*(has.a5?1.3:1)+.15*D.length;
+ c.clearRect(0,0,420,260);c.textAlign='center';
+ const B=(x,y,w,t,a,s)=>{c.fillStyle=a?'rgba(127,240,208,.22)':'rgba(255,255,255,.04)';c.strokeStyle=a?'#7ff0d0':'#21505e';c.lineWidth=2;c.beginPath();c.roundRect(x,y,w,42,8);c.fill();c.stroke();c.fillStyle=a?'#d9f3ee':'#6f9a9a';c.font='600 12px sans-serif';c.fillText(t,x+w/2,y+18);c.font='11px sans-serif';c.fillStyle='#ffcf5a';c.fillText(a?s:'idle',x+w/2,y+34)};
+ const A=(x0,y0,x1,y1,a,col)=>{c.strokeStyle=a?col:'#21505e';c.lineWidth=2;c.beginPath();c.moveTo(x0,y0);c.lineTo(x1,y1);c.stroke();if(a)for(let i=0;i<4;i++){const t=(T*(.4+Math.min(1.5,u))+i/4)%1;c.fillStyle=col;c.beginPath();c.arc(x0+(x1-x0)*t,y0+(y1-y0)*t,3.5,0,7);c.fill()}};
+ const re=on&&m>0,fe=on&&m===0,et=re&&(m===1||o>.1);
+ A(104,34,118,34,on,'#ffcf5a');A(214,34,228,34,on,'#ffcf5a');A(312,34,330,34,fe,'#ff8a6b');A(270,56,270,92,re,'#7ff0d0');A(270,134,270,170,re,'#7ff0d0');A(228,190,214,190,et,'#ffcf5a');A(330,190,312,190,re,'#9fd8ff');
+ B(8,14,96,'Glucose',on,u.toFixed(1)+'/s');B(118,14,96,'Glycolysis',on,'+'+(tot*(m?.1:1)).toFixed(1)+' ATP/s');B(228,14,84,'Pyruvate',on,(2*u).toFixed(1)+'/s');B(330,14,82,'Lactate',fe,'acid '+Math.round(acid)+'%');
+ B(228,92,84,'Krebs cycle',re,(10*u).toFixed(0)+' NADH/s');B(228,170,84,'Electron chain',re,'H+ '+Math.round((m===2?o:1)*100)+'%');
+ B(118,170,96,'ATP synthase',et,'+'+(tot*.8).toFixed(1)+' ATP/s');B(330,170,82,m===2?'Oxygen':m===1?(has.n3?'Sulfate':'Nitrate'):'No acceptor',re,m===2?Math.round(o*100)+'%':'ready');
+ c.font='600 13px sans-serif';c.fillStyle=tot>=dr?'#7ff0d0':'#ff8a6b';c.fillText(`ATP income ${tot.toFixed(1)}/s, drain ${dr.toFixed(1)}/s, net ${(tot-dr).toFixed(1)}/s`,210,244);
+ c.font='11px sans-serif';c.fillStyle='#8fb5b3';c.fillText(['Fermentation: glycolysis only, lactate recycles NAD+','Anaerobic respiration: Krebs cycle and electron chain without oxygen','Aerobic respiration: oxygen is the final electron acceptor'][m],210,258)}
+$('#metb').onclick=()=>$('#met').classList.toggle('off');$('#metx').onclick=()=>$('#met').classList.add('off');
+if(innerWidth<760)['.hud','#evo','#prot'].forEach(s=>setPanel(s,false));
+function build(p){if(has[p.id]||P.st<p.s||P.aa<p.aa||P.atp<p.atp)return;P.aa-=p.aa;P.atp-=p.atp;has[p.id]=1;msg(`${p.n} built.`,3500);sfx('build');if(AM[p.id])ach(AM[p.id]);refresh()}
+const pname=id=>PR.find(p=>p.id===id).n;
+function canEvo(){const n=ST[P.st+1];return n&&P.mass>=n.mass&&n.p.every(i=>has[i])}
+function evolve(){if(!canEvo())return;P.st++;flash=1;sfx('evo');
+ if(P.st===2)for(let i=0;i<9;i++)zones.push({x:R(200,WS-200),y:R(200,WS-200),r:130});
+ for(let i=0;i<25;i++)spawnFood(1);
+ msg(P.st===4?'You’re a eukaryote now, with a nucleus and mitochondria. Keep swimming and feeding.':`You evolved into a ${ST[P.st].n}.`,P.st===4?8000:4000);refresh()}
+$('#evb').onclick=evolve;
+function refresh(){
+ PR.forEach(p=>{const b=pbtn[p.id],built=has[p.id],lock=P.st<p.s||!!(p.req&&!has[p.req])||!!(BR[p.id]&&brOwned()&&brOwned()!==BR[p.id]),ok=P.aa>=p.aa&&P.atp>=p.atp;
+  b.disabled=!!built||lock||!ok;b.classList.toggle('built',!!built);b.classList.toggle('lock',lock&&!built);
+  b.querySelector('.st').textContent=built?'Built':lock?(P.st<p.s?'Needs '+ST[p.s].n:p.req&&!has[p.req]?'Needs '+pname(p.req):'Other build chosen'):ok?'Build':'Not enough yet'});
+ $('#hp').style.width=P.hp+'%';$('#hpn').textContent=Math.ceil(P.hp);
+ $('#atp').style.width=P.atp/atpMax()*100+'%';$('#atpn').textContent=Math.floor(P.atp);$('#aan').textContent=Math.floor(P.aa);
+ const c=dvCost();$('#dv').textContent=`Divide ${D.length}/${dvCap()}: ${c.atp} ATP + ${c.aa} aa`;$('#dv').disabled=!!divA||D.length>=dvCap()||P.atp<c.atp||P.aa<c.aa||divCd>0;
+ $('#orgn').textContent=ORG.filter(o=>o.done).length+'/'+ORG.length;
+ const o2=o2At(P.x,P.y);$('#gb').style.width=G/gMax()*100+'%';$('#gn').textContent=Math.floor(G);$('#acb').style.width=acid+'%';$('#mini').textContent=`HP ${Math.ceil(P.hp)}, ATP ${Math.floor(P.atp)}, Glucose ${Math.floor(G)}, Acid ${Math.floor(acid)}%`+(canEvo()?', Ready to evolve!':'');$('#dv2').disabled=$('#dv').disabled;$('#o2t').textContent=`Oxygen here: ${Math.round(o2*100)}%. Yield: ${Math.round(yl(o2)*10)/10} ATP per glucose`;
+ document.querySelectorAll('.path button').forEach(b=>{const m=+b.dataset.m;b.disabled=m===1&&!has.nitrate||m===2&&!has.etc;b.classList.toggle('on',m===mode)});$('#ob').style.width=capInfo?Math.min(100,capInfo.prog/capInfo.need*100)+'%':'0%';
+ const n=ST[P.st+1],eb=$('#evb');
+ if(!n){$('#evn').textContent='Eukaryote: fully evolved';$('#mb').style.width='100%';$('#evr').textContent='';eb.disabled=true;eb.textContent='Fully evolved';return}
+ $('#evn').textContent='Next: '+n.n;$('#mb').style.width=Math.min(100,P.mass/n.mass*100)+'%';
+ $('#evr').textContent=`Mass ${Math.floor(P.mass)} of ${n.mass}. Proteins: `+n.p.map(i=>(has[i]?'✓ ':'')+pname(i)).join(', ');
+ eb.disabled=!canEvo()}
+setInterval(refresh,200);refresh();
+let last=performance.now();
+function loop(n){const dt=Math.min(.05,(n-last)/1000);last=n;if(running&&!document.body.classList.contains('po')){T+=dt;step(dt)}draw();if(!$('#met').classList.contains('off'))drawMet();requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+$('#go').onclick=()=>{$('#intro').remove();running=true;msg('Collect sugar and amino acids, then build your first protein.',4500)};
+</script>
+</body></html>

@@ -1,0 +1,11 @@
+{
+  "name": "primordial",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Primordial: from cell to eukaryote",
+  "dependencies": {
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/cli": "^6.1.0",
+    "@capacitor/core": "^6.1.0"
+  }
+}
